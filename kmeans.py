@@ -23,7 +23,23 @@ class KMeans:
         ]
         return distances.index(np.min(distances))
 
-    def fit(self, data):
+    def _has_converged(self, previous: dict) -> bool:
+        for centroid in self._centroids:
+            # taking the distance betweent the current centroid position and the current
+            # we do this to determine if we have convergence
+            if (
+                np.sum(
+                    (self.centroids[centroid] - previous[centroid])
+                    / previous[centroid]
+                    * 100.0
+                )
+                > self.tolerance
+            ):
+                # if the tolerance is exceeded, we have not converged and need more iterations
+                return False
+        return True
+
+    def fit(self, data: NDArray) -> None:
         self.centroids = {}
         for i in range(self.k):
             # 'randomly' assign each cluster to a point
@@ -51,19 +67,6 @@ class KMeans:
                 self.centroids[cluster_index] = np.average(
                     self._classes[cluster_index], axis=0
                 )
+            if self._has_converged(previous):
+                return
 
-            for centroid in self._centroids:
-                # taking the distance betweent the current centroid position and the current
-                # we do this to determine if we have convergence
-                if (
-                    np.sum(
-                        (self.centroids[centroid] - previous[centroid])
-                        / previous[centroid]
-                        * 100.0
-                    )
-                    > self.tolerance
-                ):
-                    # if the tolerance is exceeded, we have not converged and need more iterations
-                    continue
-            # if we make it through the evaluation loop, there has been convergence
-            return
